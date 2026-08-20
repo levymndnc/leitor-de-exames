@@ -37,6 +37,8 @@ body{font-family:sans-serif;background:#F8FAFC;color:#1E293B;max-width:430px;mar
 .rh .m{font-size:13px;color:#64748B;margin-top:4px;margin-bottom:20px}
 .ab{background:#FEF2F2;border:1px solid #EF4444;border-radius:10px;padding:14px;margin-bottom:20px;font-size:13px}
 .ab strong{color:#EF4444}
+.aw{background:#FFFBEB;border:1px solid #F59E0B;border-radius:10px;padding:14px;margin-bottom:20px;font-size:13px}
+.aw strong{color:#F59E0B}
 .ri{background:#fff;border-radius:10px;padding:16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.08);cursor:pointer;border-left:4px solid #E2E8F0}
 .ri.sg{border-left-color:#22C55E}
 .ri.sy{border-left-color:#F59E0B}
@@ -53,11 +55,24 @@ body{font-family:sans-serif;background:#F8FAFC;color:#1E293B;max-width:430px;mar
 .ri.exp .rd{display:block}
 .rd h4{font-size:13px;font-weight:600;color:#1E293B;margin-bottom:4px;margin-top:10px}
 .rd h4:first-child{margin-top:0}
+.rd p{margin-bottom:8px}
+.rd .cond{background:#FEF2F2;border-radius:8px;padding:10px 12px;margin-top:8px;border-left:3px solid #EF4444}
+.rd .cond strong{color:#EF4444}
+.rd .sug{background:#F0FDF4;border-radius:8px;padding:10px 12px;margin-top:8px;border-left:3px solid #22C55E}
+.rd .sug strong{color:#22C55E}
 .dp{background:#FFFBEB;border:1px solid #F59E0B;border-radius:10px;padding:14px;font-size:12px;margin:20px 0;text-align:center}
+.dp strong{color:#F59E0B}
 .pm{padding:14px;border-radius:10px;font-size:14px;text-align:center;margin-top:14px}
 .pm.l{background:#E0F2FE;color:#0EA5E9}
 .pm.s{background:#F0FDF4;color:#22C55E}
 .pm.e{background:#FEF2F2;color:#EF4444}
+.sum{display:flex;gap:10px;margin-bottom:20px}
+.sum .chip{flex:1;background:#fff;border-radius:10px;padding:14px 10px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.sum .chip .ct{font-size:22px;font-weight:700}
+.sum .chip .cl{font-size:11px;color:#64748B;margin-top:2px}
+.chip.cg .ct{color:#22C55E}
+.chip.cy .ct{color:#F59E0B}
+.chip.cr .ct{color:#EF4444}
 </style>
 </head>
 <body>
@@ -101,6 +116,7 @@ body{font-family:sans-serif;background:#F8FAFC;color:#1E293B;max-width:430px;mar
     <h2 id="exTitle">Exame</h2>
     <div class="m" id="exMeta"></div>
   </div>
+  <div id="sumArea"></div>
   <div id="al"></div>
   <div id="rl"></div>
   <div class="dp"><strong>Aviso:</strong> Consulte seu medico.</div>
@@ -115,213 +131,179 @@ body{font-family:sans-serif;background:#F8FAFC;color:#1E293B;max-width:430px;mar
 
 <script>
 // ===== ONBOARDING =====
-var mo = document.getElementById('onb');
-var ck = document.getElementById('ck');
-var gb = document.getElementById('goBtn');
-
-ck.onchange = function() {
-  gb.disabled = !ck.checked;
-};
-
-gb.onclick = function() {
-  mo.classList.add('hide');
-};
+var mo=document.getElementById('onb'),ck=document.getElementById('ck'),gb=document.getElementById('goBtn');
+ck.onchange=function(){gb.disabled=!ck.checked};
+gb.onclick=function(){mo.classList.add('hide')};
 
 // ===== NAVEGACAO =====
-function nav(s) {
-  document.querySelectorAll('.sc').forEach(function(e) {
-    e.classList.remove('active');
-  });
-  var t = document.getElementById('sc-' + s);
-  if (t) t.classList.add('active');
-  document.querySelectorAll('.ni').forEach(function(e) {
-    e.classList.remove('active');
-  });
-  var n = document.querySelector('[data-sc="' + s + '"]');
-  if (n) n.classList.add('active');
-  scrollTo(0, 0);
+function nav(s){
+  document.querySelectorAll('.sc').forEach(function(e){e.classList.remove('active')});
+  var t=document.getElementById('sc-'+s);if(t)t.classList.add('active');
+  document.querySelectorAll('.ni').forEach(function(e){e.classList.remove('active')});
+  var n=document.querySelector('[data-sc="'+s+'"]');if(n)n.classList.add('active');
+  scrollTo(0,0);
 }
+function tog(e){e.classList.toggle('exp')}
 
-function tog(e) {
-  e.classList.toggle('exp');
-}
-
-// ===== UPLOAD PDF =====
-var ub = document.getElementById('upBox');
-var pi = document.getElementById('pdfIn');
-var ps = document.getElementById('ps');
-
-ub.onclick = function() {
-  pi.click();
-};
-
-pi.onchange = function(e) {
-  var f = e.target.files[0];
-  if (!f) return;
-  ps.innerHTML = '<div class="pm l">Lendo PDF...</div>';
-  var r = new FileReader();
-  r.onload = function(v) {
-    ex(v.target.result);
-  };
+// ===== UPLOAD =====
+var ub=document.getElementById('upBox'),pi=document.getElementById('pdfIn'),ps=document.getElementById('ps');
+ub.onclick=function(){pi.click()};
+pi.onchange=function(e){
+  var f=e.target.files[0];if(!f)return;
+  ps.innerHTML='<div class="pm l">Lendo PDF...</div>';
+  var r=new FileReader();
+  r.onload=function(v){ex(v.target.result)};
   r.readAsArrayBuffer(f);
 };
 
 // ===== EXTRACAO PDF =====
-function ex(buf) {
-  if (typeof pdfjsLib === 'undefined') {
-    ps.innerHTML = '<div class="pm e">Erro: PDF.js nao carregou</div>';
-    return;
-  }
-  pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-  pdfjsLib.getDocument({ data: buf }).promise
-    .then(function(pdf) {
-      var arr = [];
-      for (var i = 1; i <= pdf.numPages; i++) {
-        arr.push(pdf.getPage(i).then(function(g) {
-          return g.getTextContent().then(function(t) {
-            return t.items.map(function(x) {
-              return x.str;
-            }).join(' ');
-          });
-        }));
+function ex(buf){
+  if(typeof pdfjsLib==='undefined'){ps.innerHTML='<div class="pm e">Erro: PDF.js nao carregou</div>';return}
+  pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  pdfjsLib.getDocument({data:buf}).promise
+    .then(function(pdf){
+      var a=[];for(var i=1;i<=pdf.numPages;i++){
+        a.push(pdf.getPage(i).then(function(g){
+          return g.getTextContent().then(function(t){return t.items.map(function(x){return x.str}).join(' ')})
+        }))
       }
-      return Promise.all(arr);
+      return Promise.all(a)
     })
-    .then(function(p) {
-      pa(p.join('\n'));
-    })
-    .catch(function(e) {
-      ps.innerHTML = '<div class="pm e">Erro: ' + e.message + '</div>';
-    });
+    .then(function(p){pa(p.join('\n'))})
+    .catch(function(e){ps.innerHTML='<div class="pm e">Erro: '+e.message+'</div>'});
 }
 
-// ===== INDICADORES (38 exames) =====
-var IND = [
-  {n:'Glicemia',a:['glicose','glicemia'],u:'mg/dL',r:[70,99],i:'Acucar no sangue apos jejum.',h:'Pre-diabetes ou diabetes.',l:'Hipoglicemia.'},
-  {n:'Hemoglobina',a:['hemoglobina'],u:'g/dL',r:[12,15],i:'Transporta oxigenio.',h:'Desidratacao.',l:'Anemia.'},
-  {n:'Hematocrito',a:['hematocrito'],u:'%',r:[36,46],i:'Globulos vermelhos no sangue.',h:'Desidratacao.',l:'Anemia.'},
-  {n:'Leucocitos',a:['leucocitos','leucometria'],u:'/mm3',r:[4000,11000],i:'Globulos brancos.',h:'Infeccao.',l:'Imunidade baixa.'},
-  {n:'Plaquetas',a:['plaquetas'],u:'/mm3',r:[150000,450000],i:'Coagulacao.',h:'Trombose.',l:'Sangramento.'},
-  {n:'Colesterol Total',a:['colesterol total'],u:'mg/dL',r:[0,200],i:'Soma do colesterol.',h:'Risco cardio.',l:'OK.'},
-  {n:'HDL',a:['colesterol hdl'],u:'mg/dL',r:[40,999],i:'Colesterol bom.',h:'Protecao.',l:'Risco.'},
-  {n:'LDL',a:['colesterol ldl'],u:'mg/dL',r:[0,130],i:'Colesterol ruim.',h:'Risco cardio.',l:'OK.'},
-  {n:'VLDL',a:['colesterol vldl'],u:'mg/dL',r:[0,30],i:'Colesterol VLDL.',h:'Risco cardio.',l:'OK.'},
-  {n:'Triglicerides',a:['triglicerides','triglicerideos'],u:'mg/dL',r:[0,150],i:'Gordura no sangue.',h:'Risco cardio.',l:'OK.'},
-  {n:'Creatinina',a:['creatinina'],u:'mg/dL',r:[0.6,1.1],i:'Funcao renal.',h:'Renal reduzida.',l:'OK.'},
-  {n:'Ureia',a:['ureia'],u:'mg/dL',r:[15,48],i:'Metabolismo proteico.',h:'Problemas renais.',l:'OK.'},
-  {n:'Acido Urico',a:['acido urico'],u:'mg/dL',r:[2.4,5.7],i:'Metabolismo de purinas.',h:'Gota.',l:'OK.'},
-  {n:'Ferro',a:['ferro'],u:'ug/dL',r:[33,193],i:'Mineral essencial.',h:'Excesso de ferro.',l:'Deficiencia de ferro.'},
-  {n:'Transferrina',a:['transferrina'],u:'mg/dL',r:[200,360],i:'Transporta ferro no sangue.',h:'Excesso de ferro.',l:'Deficiencia de ferro.'},
-  {n:'Gama-GT',a:['gama glutamil transferase','gama-gt','ggt'],u:'U/L',r:[5,36],i:'Enzima hepatica.',h:'Problemas hepaticos.',l:'OK.'},
-  {n:'TGO',a:['aspartato aminotransferase','tgo','ast'],u:'U/L',r:[0,32],i:'Enzima hepatica.',h:'Lesao hepatica.',l:'OK.'},
-  {n:'TGP',a:['alanina aminotransferase','tgp','alt'],u:'U/L',r:[0,33],i:'Enzima hepatica.',h:'Lesao hepatica.',l:'OK.'},
-  {n:'PCR',a:['proteina c reativa','pcr'],u:'mg/L',r:[0,5],i:'Marcador de inflamacao.',h:'Inflamacao ativa.',l:'OK.'},
-  {n:'HbA1c',a:['hemoglobina glicada','hba1c','glicada'],u:'%',r:[0,5.7],i:'Media glicemia 3 meses.',h:'Diabetes.',l:'OK.'},
-  {n:'Vitamina B12',a:['vitamina b12'],u:'pg/mL',r:[197,771],i:'Vitamina do sistema nervoso.',h:'Excesso.',l:'Deficiencia neurologica.'},
-  {n:'Cortisol',a:['cortisol'],u:'ug/dL',r:[4.82,19.5],i:'Hormonio do estresse.',h:'Excesso de cortisol.',l:'Insuficiencia adrenal.'},
-  {n:'Estradiol',a:['estradiol'],u:'pg/mL',r:[20,400],i:'Hormonio feminino.',h:'Excesso.',l:'Deficiencia.'},
-  {n:'Ferritina',a:['ferritina'],u:'ng/mL',r:[13,150],i:'Reserva de ferro.',h:'Excesso de ferro.',l:'Deficiencia de ferro.'},
-  {n:'FSH',a:['hormonio foliculo estimulante','fsh'],u:'mUI/mL',r:[1.5,12],i:'Hormonio reprodutivo.',h:'Menopausa ou falencia ovarica.',l:'Problemas reprodutivos.'},
-  {n:'Insulina',a:['insulina'],u:'uU/mL',r:[2.6,24.9],i:'Hormonio que controla glicose.',h:'Resistencia a insulina.',l:'Baixa producao.'},
-  {n:'LH',a:['hormonio luteinizante','lh'],u:'mIU/mL',r:[1,15],i:'Hormonio reprodutivo.',h:'Excesso.',l:'Deficiencia.'},
-  {n:'Progesterona',a:['progesterona'],u:'ng/mL',r:[0.1,25],i:'Hormonio reprodutivo.',h:'Excesso.',l:'Deficiencia.'},
-  {n:'Prolactina',a:['prolactina'],u:'ng/mL',r:[4.79,23.3],i:'Hormonio da lactacao.',h:'Hiperprolactinemia.',l:'Deficiencia.'},
-  {n:'SDHEA',a:['sulfato de dehidroepiandrosterona','sdhea'],u:'ug/dL',r:[60.9,337],i:'Hormonio androgeno.',h:'Excesso.',l:'Deficiencia.'},
-  {n:'SHBG',a:['globulina ligadora de hormonios sexuais','shbg'],u:'nmol/L',r:[20,130],i:'Proteina que liga hormonios.',h:'Excesso.',l:'Deficiencia.'},
-  {n:'T4 Livre',a:['t4 - tiroxina livre','t4 livre','t4-tiroxina livre'],u:'ng/dL',r:[0.93,1.7],i:'Hormonio tireoidiano ativo.',h:'Hipertireoidismo.',l:'Hipotireoidismo.'},
-  {n:'TSH',a:['hormonio tireoestimulante','tsh'],u:'uIU/mL',r:[0.27,4.2],i:'Hormonio da tireoide.',h:'Hipotireoidismo.',l:'Hipertireoidismo.'},
-  {n:'Vitamina D',a:['vitamina d','vitamina d - 25 oh','25 oh'],u:'ng/mL',r:[20,60],i:'Vitamina do sol, absorcao de calcio.',h:'Excesso de calcio.',l:'Osteoporose.'},
-  {n:'IgE',a:['ige','imunoglobulina e'],u:'UI/mL',r:[0,100],i:'Anticorpo de alergia.',h:'Processo alergico.',l:'OK.'},
-  {n:'VCM',a:['vcm'],u:'fL',r:[80,100],i:'Volume do globulo vermelho.',h:'Macrocitose.',l:'Microcitose.'},
-  {n:'HCM',a:['hcm'],u:'pg',r:[27,33],i:'Hemoglobina por globulo.',h:'Macrocitose.',l:'Anemia.'},
-  {n:'RDW',a:['rdw'],u:'%',r:[11.5,14.5],i:'Variacao no tamanho dos globulos.',h:'Anisocitose.',l:'OK.'}
+// ===== INDICADORES =====
+// Campos: n=nome, a=aliases, ex=exclusao, u=unidade, r=referencia
+// i=info, h=alto, l=baixo, s=sugestao melhoria, d=doencas possiveis
+var IND=[
+{n:'Glicemia',a:['glicose','glicemia'],ex:'glicada',u:'mg/dL',r:[70,99],i:'Acucar no sangue apos jejum de 8h.',h:'Acima de 126 mg/dL confirma diabetes. Entre 100-125 indica pre-diabetes.',l:'Hipoglicemia - pode causar tremores, suor e desmaio.',s:'Reduza acucar refinado, refrigerantes e doces. Aumente fibras e exercicios. Mantenha peso saudavel.',d:'Diabetes tipo 2, pre-diabetes, resistencia a insulina, sindrome metabolica.'},
+{n:'Hemoglobina',a:['hemoglobina'],ex:'glicada',u:'g/dL',r:[12,15],i:'Proteina que transporta oxigenio no sangue.',h:'Policitemia, desidratacao ou doenca da medula.',l:'Anemia - causa fadiga, palidez e falta de ar.',s:'Consuma carnes vermelhas, folhas verdes escuras, feijao e lentilha. Vitamina C ajuda na absorcao de ferro.',d:'Anemia ferropriva, anemia cronica, talassemia, leucemia (raro).'},
+{n:'Hematocrito',a:['hematocrito'],u:'%',r:[36,46],i:'Percentual de globulos vermelhos no sangue.',h:'Desidratacao, policitemia.',l:'Anemia ou hemodiluicao.',s:'Hidrate-se bem. Se baixo, siga as mesmas orientacoes da hemoglobina.',d:'Anemia, desidratacao severa, policitemia vera.'},
+{n:'Leucocitos',a:['leucocitos','leucometria'],u:'/mm3',r:[4000,11000],i:'Globulos brancos que defendem o corpo contra infeccoes.',h:'Infeccao bacteriana, inflamacao, leucemia.',l:'Imunidade reduzida - maior risco de infeccoes.',s:'Mantenha alimentacao rica em vitamina C, zinco e proteinas. Durma 7-8h por noite.',d:'Infeccao aguda, leucopenia, leucemia, imunossupressao.'},
+{n:'Plaquetas',a:['plaquetas'],u:'/mm3',r:[150000,450000],i:'Celulas responsaveis pela coagulacao do sangue.',h:'Trombocitose - risco de trombose.',l:'Trombocitopenia - risco de sangramento.',s:'Evite alcoolemia. Mantenha hidratacao. Nao use AAS sem orientacao medica.',d:'Trombocitopenia, Dengue, purpura, leucemia, trombocitose essencial.'},
+{n:'Colesterol Total',a:['colesterol total'],u:'mg/dL',r:[0,200],i:'Soma de todas as fracoes de colesterol.',h:'Aumenta risco de infarto e AVC.',l:'Raramente problematico.',s:'Reduza gorduras saturadas (frituras, carnes gordurosas). Aumente aveia, oleaginosas e peixes.',d:'Hipercolesterolemia, aterosclerose, risco cardiovascular.'},
+{n:'HDL',a:['colesterol hdl'],u:'mg/dL',r:[40,999],i:'Colesterol bom que remove gordura das arterias.',h:'Protecao cardiovascular - quanto maior melhor.',l:'Aumenta risco cardiovascular.',s:'Exercicios aerobicos regulares. Consuma abacate, azeite, omega-3. Evite gorduras trans.',d:'Risco cardiovascular aumentado, aterosclerose.'},
+{n:'LDL',a:['colesterol ldl'],u:'mg/dL',r:[0,130],i:'Colesterol ruim que se deposita nas arterias.',h:'Aumenta risco de infarto e AVC.',l:'Raramente problematico.',s:'Reduza carnes vermelhas, queijos e manteiga. Aumente fibras, aveia e peixes.',d:'Aterosclerose, infarto, AVC, doenca arterial periferica.'},
+{n:'VLDL',a:['colesterol vldl'],u:'mg/dL',r:[0,30],i:'Colesterol muito baixo, transporta triglicerides.',h:'Aumenta risco cardiovascular.',l:'Raramente problematico.',s:'Reduza acucar, alcool e carboidratos refinados.',d:'Hipertrigliceridemia, sindrome metabolica.'},
+{n:'Triglicerides',a:['triglicerides','triglicerideos'],u:'mg/dL',r:[0,150],i:'Tipo de gordura no sangue.',h:'Aumenta risco cardiovascular e pancreatite.',l:'Raramente problematico.',s:'Reduza alcool, acucar e farinha branca. Exercicios regulares.',d:'Hipertrigliceridemia, pancreatite, sindrome metabolica, diabetes.'},
+{n:'Creatinina',a:['creatinina'],u:'mg/dL',r:[0.6,1.1],i:'Produto do metabolismo muscular filtrado pelos rins.',h:'Funcao renal reduzida.',l:'Geralmente nao preocupa.',s:'Hidrate-se bem (2L agua/dia). Evite excesso de anti-inflamatorios. Controle pressao e glicose.',d:'Doenca renal cronica, insuficiencia renal, nefropatia diabetica.'},
+{n:'Ureia',a:['ureia'],u:'mg/dL',r:[15,48],i:'Produto do metabolismo de proteinas.',h:'Problemas renais ou desidratacao.',l:'Geralmente normal.',s:'Hidrate-se bem. Evite excesso de proteinas se elevado.',d:'Insuficiencia renal, desidratacao, dieta hiperproteica.'},
+{n:'Acido Urico',a:['acido urico'],u:'mg/dL',r:[2.4,5.7],i:'Produto do metabolismo de purinas.',h:'Gota ou calculos renais.',l:'Geralmente nao preocupa.',s:'Reduza carnes, frutos do mar, alcool e refrigerantes. Beba muita agua.',d:'Gota, calculo renal, hiperuricemia.'},
+{n:'Ferro',a:['ferro'],u:'ug/dL',r:[33,193],i:'Mineral essencial para producao de hemoglobina.',h:'Hemocromatose ou excesso de suplementacao.',l:'Deficiencia de ferro.',s:'Consuma carnes, figado, folhas escuras. Vitamina C aumenta absorcao.',d:'Anemia ferropriva, hemocromatose.'},
+{n:'Transferrina',a:['transferrina'],u:'mg/dL',r:[200,360],i:'Proteina que transporta ferro no sangue.',h:'Excesso de ferro ou inflamacao.',l:'Deficiencia de ferro.',s:'Siga orientacoes do ferro. Avalie causa com medico.',d:'Anemia ferropriva, hemocromatose.'},
+{n:'Gama-GT',a:['gama glutamil transferase','gama-gt','ggt'],u:'U/L',r:[5,36],i:'Enzima do figado.',h:'Problemas hepaticos, alcool ou medicamentos.',l:'Geralmente normal.',s:'Reduza ou elimine alcool. Evite automedicacao. Mantenha peso saudavel.',d:'Doenca hepatica, alcoolismo, esteatose hepatica.'},
+{n:'TGO',a:['aspartato aminotransferase','tgo','ast'],u:'U/L',r:[0,32],i:'Enzima presente no figado, coracao e musculos.',h:'Lesao hepatica ou muscular.',l:'Geralmente normal.',s:'Evite alcool e medicamentos hepatotoxicos. Mantenha dieta equilibrada.',d:'Hepatite, esteatose hepatica, lesao muscular.'},
+{n:'TGP',a:['alanina aminotransferase','tgp','alt'],u:'U/L',r:[0,33],i:'Enzima mais especifica do figado.',h:'Lesao hepatica.',l:'Geralmente normal.',s:'Evite alcool e gorduras. Controle peso. Evite automedicacao.',d:'Hepatite, esteatose hepatica, hepatotoxicidade.'},
+{n:'PCR',a:['proteina c reativa','pcr'],u:'mg/L',r:[0,5],i:'Marcador de inflamacao no corpo.',h:'Processo inflamatorio ou infeccioso.',l:'Geralmente normal.',s:'Mantenha dieta anti-inflamatoria: omega-3, azeite, folhas. Controle peso e estresse.',d:'Infeccao, doenca autoimune, inflamacao cronica.'},
+{n:'HbA1c',a:['hemoglobina glicada','hba1c','glicada'],u:'%',r:[0,5.7],i:'Media da glicemia dos ultimos 3 meses.',h:'Pre-diabetes (5.7-6.4) ou diabetes (acima de 6.5).',l:'Geralmente nao preocupa.',s:'Reduza acucar e carboidratos refinados. Exercicios diarios. Controle peso.',d:'Diabetes mellitus, pre-diabetes, controle glicemico inadequado.'},
+{n:'Vitamina B12',a:['vitamina b12'],u:'pg/mL',r:[197,771],i:'Vitamina essencial para sistema nervoso e formacao sanguinea.',h:'Raramente problematico (excesso de suplementacao).',l:'Deficiencia neurologica.',s:'Consuma carnes, peixes, ovos e laticinios. Vegetarianos devem suplementar.',d:'Anemia perniciosa, neuropatia, deficit cognitivo.'},
+{n:'Cortisol',a:['cortisol'],u:'ug/dL',r:[4.82,19.5],i:'Hormonio do estresse.',h:'Sindrome de Cushing.',l:'Insuficiencia adrenal.',s:'Controle estresse, durma bem. Evite excesso de cafeina.',d:'Sindrome de Cushing, doenca de Addison, estresse cronico.'},
+{n:'Estradiol',a:['estradiol'],u:'pg/mL',r:[20,400],i:'Hormonio feminino principal.',h:'Excesso pode indicar cistos ou tumores.',l:'Menopausa ou falencia ovarica.',s:'Mantenha peso saudavel. Controle estresse. Consulte ginecologista.',d:'Menopausa, SOP, falencia ovariana precoce.'},
+{n:'Ferritina',a:['ferritina'],u:'ng/mL',r:[13,150],i:'Proteina que armazena ferro no corpo.',h:'Excesso de ferro ou inflamacao.',l:'Deficiencia de ferro.',s:'Consuma fontes de ferro. Evite suplementacao sem orientacao.',d:'Hemocromatose, anemia ferropriva, inflamacao cronica.'},
+{n:'FSH',a:['hormonio foliculo estimulante','fsh'],u:'mUI/mL',r:[1.5,12],i:'Hormonio que regula reproducao.',h:'Menopausa ou falencia ovariana.',l:'Problemas reprodutivos.',s:'Consulte ginecologista/endocrinologista. Mantenha peso saudavel.',d:'Menopausa, falencia ovariana, infertilidade.'},
+{n:'Insulina',a:['insulina'],u:'uU/mL',r:[2.6,24.9],i:'Hormonio que controla glicose.',h:'Resistencia a insulina.',l:'Baixa producao.',s:'Reduza acucar e carboidratos. Exercicios regulares. Controle peso.',d:'Resistencia insulinica, pre-diabetes, sindrome metabolica.'},
+{n:'LH',a:['hormonio luteinizante','lh'],u:'mIU/mL',r:[1,15],i:'Hormonio reprodutivo.',h:'Menopausa ou SOP.',l:'Problemas reprodutivos.',s:'Consulte ginecologista/endocrinologista.',d:'SOP, menopausa, infertilidade.'},
+{n:'Progesterona',a:['progesterona'],u:'ng/mL',r:[0.1,25],i:'Hormonio reprodutivo feminino.',h:'Raramente problematico.',l:'Deficiencia luteal.',s:'Consulte ginecologista. Controle estresse.',d:'Deficiencia luteal, infertilidade, irregularidade menstrual.'},
+{n:'Prolactina',a:['prolactina'],u:'ng/mL',r:[4.79,23.3],i:'Hormonio da lactacao.',h:'Hiperprolactinemia.',l:'Geralmente nao preocupa.',s:'Controle estresse. Evite medicamentos que elevam prolactina.',d:'Hiperprolactinemia, prolactinoma, hipotireoidismo.'},
+{n:'SDHEA',a:['sulfato de dehidroepiandrosterona','sdhea'],u:'ug/dL',r:[60.9,337],i:'Hormonio androgeno suprarrenal.',h:'Excesso de androgenos.',l:'Insuficiencia suprarrenal.',s:'Consulte endocrinologista. Mantenha peso saudavel.',d:'Hiperplasia adrenal, SOP, insuficiencia adrenal.'},
+{n:'SHBG',a:['globulina ligadora de hormonios sexuais','shbg'],u:'nmol/L',r:[20,130],i:'Proteina que liga hormonios sexuais.',h:'Excesso pode reduzir hormonios livres.',l:'Deficiencia, resistencia a insulina.',s:'Controle peso e insulina. Consulte endocrinologista.',d:'SOP, resistencia insulinica, hipogonadismo.'},
+{n:'T4 Livre',a:['t4 - tiroxina livre','t4 livre','t4-tiroxina livre'],u:'ng/dL',r:[0.93,1.7],i:'Hormonio tireoidiano ativo.',h:'Hipertireoidismo.',l:'Hipotireoidismo.',s:'Consulte endocrinologista. Iodo na dieta (peixes, algas). Evite excesso de soja.',d:'Hipertireoidismo, hipotireoidismo, Hashimoto, Graves.'},
+{n:'TSH',a:['hormonio tireoestimulante','tsh'],u:'uIU/mL',r:[0.27,4.2],i:'Hormonio que estimula a tireoide.',h:'Hipotireoidismo.',l:'Hipertireoidismo.',s:'Consulte endocrinologista. Mantenha iodo na dieta. Controle estresse.',d:'Hipotireoidismo, hipertireoidismo, Hashimoto, Graves.'},
+{n:'Vitamina D',a:['vitamina d','vitamina d - 25 oh','25 oh'],u:'ng/mL',r:[20,60],i:'Vitamina do sol, essencial para absorcao de calcio.',h:'Excesso de calcio (rarissimo sem suplementacao).',l:'Osteoporose e fraqueza muscular.',s:'Tome sol 15-20 min/dia. Consuma peixes gordurosos e ovos. Suplemente se necessario.',d:'Osteoporose, raquitismo, fraqueza muscular, deficiencia imunologica.'},
+{n:'IgE',a:['ige','imunoglobulina e'],u:'UI/mL',r:[0,100],i:'Anticorpo relacionado a alergias.',h:'Processo alergico ou parasitario.',l:'Geralmente nao preocupa.',s:'Evite alergenos conhecidos. Mantenha ambiente limpo e livre de poeira/acaros.',d:'Alergias, asma, rinite alergica, parasitoses.'},
+{n:'VCM',a:['vcm'],u:'fL',r:[80,100],i:'Volume medio dos globulos vermelhos.',h:'Macrocitose - celulas grandes.',l:'Microcitose - celulas pequenas.',s:'Se alto: vitamina B12 e acido folico. Se baixo: ferro. Consulte medico.',d:'Anemia macrocitica (B12), anemia microcitica (ferro), talassemia.'},
+{n:'HCM',a:['hcm'],u:'pg',r:[27,33],i:'Quantidade de hemoglobina por globulo.',h:'Macrocitose.',l:'Anemia ferropriva.',s:'Se baixo: aumente ferro na dieta. Se alto: investigar B12.',d:'Anemia ferropriva, macrocitose.'},
+{n:'RDW',a:['rdw'],u:'%',r:[11.5,14.5],i:'Variacao no tamanho dos globulos vermelhos.',h:'Anisocitose - celulas de tamanhos variados.',l:'Geralmente normal.',s:'Investigar causa da anemia com medico. Dieta rica em ferro e vitaminas.',d:'Anemias variadas, deficiencia nutricional.'}
 ];
 
-// ===== PARSE TEXTO =====
-function pa(t) {
-  var f = [];
-  var lb = 'Laboratorio';
-  var d = new Date().toLocaleDateString('pt-BR');
-  var u = t.toUpperCase();
+// ===== PARSE =====
+function pa(t){
+  var f=[],lb='Laboratorio',d=new Date().toLocaleDateString('pt-BR');
+  var u=t.toUpperCase();
+  if(u.indexOf('HAPVIDA')>-1)lb='Hapvida';
+  if(u.indexOf('DASA')>-1)lb='DASA';
+  if(u.indexOf('FLEURY')>-1)lb='Fleury';
+  if(u.indexOf('HILAB')>-1)lb='Hilab';
+  if(u.indexOf('SYNLAB')>-1)lb='Synlab';
+  var dm=t.match(/Emissao[^\d]*(\d{2}\/\d{2}\/\d{4})/);
+  if(dm){d=dm[1]}else{dm=t.match(/(\d{2})\/(\d{2})\/(\d{4})/);if(dm)d=dm[0]}
 
-  // Detectar laboratorio
-  if (u.indexOf('HAPVIDA') > -1) lb = 'Hapvida';
-  if (u.indexOf('DASA') > -1) lb = 'DASA';
-  if (u.indexOf('FLEURY') > -1) lb = 'Fleury';
-  if (u.indexOf('HILAB') > -1) lb = 'Hilab';
-  if (u.indexOf('SYNLAB') > -1) lb = 'Synlab';
-
-  // Detectar data (procura "Emissao" primeiro)
-  var dm = t.match(/Emissao[^\d]*(\d{2}\/\d{2}\/\d{4})/);
-  if (dm) {
-    d = dm[1];
-  } else {
-    dm = t.match(/(\d{2})\/(\d{2})\/(\d{4})/);
-    if (dm) d = dm[0];
-  }
-
-  // Buscar cada indicador no texto
-  IND.forEach(function(x) {
-    x.a.forEach(function(al) {
-      if (f.some(function(z) { return z.n === x.n; })) return;
-      // Regex SEM escape - aliases nao tem caracteres especiais
-      // [^0-9]* aceita qualquer texto entre o nome e o numero
-      var pat = al + '[^0-9]*([0-9]+[.,][0-9]+|[0-9]+)';
-      var m = t.match(new RegExp(pat, 'i'));
-      if (m) {
-        var v = parseFloat(m[1].replace(',', '.'));
-        if (!isNaN(v) && v > 0) {
-          f.push({ n: x.n, v: v, u: x.u, r: x.r, i: x.i, h: x.h, l: x.l });
+  IND.forEach(function(x){
+    x.a.forEach(function(al){
+      if(f.some(function(z){return z.n===x.n}))return;
+      var pat=al;
+      if(x.ex){pat=al+'(?! *'+x.ex+')'}
+      pat+='.{0,40}?([0-9]+[.,][0-9]+|[0-9]+)';
+      var m=t.match(new RegExp(pat,'i'));
+      if(m){
+        var v=parseFloat(m[1].replace(',','.'));
+        if(!isNaN(v)&&v>0){
+          f.push({n:x.n,v:v,u:x.u,r:x.r,i:x.i,h:x.h,l:x.l,s:x.s,d:x.d});
         }
       }
     });
   });
 
-  if (!f.length) {
-    ps.innerHTML = '<div class="pm e">Nenhum indicador encontrado.</div>';
-    return;
-  }
-  ps.innerHTML = '<div class="pm s">' + f.length + ' extraidos!</div>';
-  re(f, lb, d);
-  setTimeout(function() { nav('res'); }, 900);
+  if(!f.length){ps.innerHTML='<div class="pm e">Nenhum indicador encontrado.</div>';return}
+  ps.innerHTML='<div class="pm s">'+f.length+' extraidos!</div>';
+  re(f,lb,d);
+  setTimeout(function(){nav('res')},900);
 }
 
-// ===== RENDERIZAR RESULTADOS =====
-function re(f, lb, d) {
-  document.getElementById('exTitle').textContent = 'Exame de Sangue';
-  document.getElementById('exMeta').textContent = d + ' - ' + lb;
-  var ha = false;
-  var al = document.getElementById('al');
-  al.innerHTML = '';
-  var rl = document.getElementById('rl');
-  rl.innerHTML = '';
+// ===== RENDER =====
+function re(f,lb,d){
+  document.getElementById('exTitle').textContent='Exame de Sangue';
+  document.getElementById('exMeta').textContent=d+' - '+lb;
+  var nG=0,nY=0,nR=0;
+  var al=document.getElementById('al');al.innerHTML='';
+  var rl=document.getElementById('rl');rl.innerHTML='';
+  var sa=document.getElementById('sumArea');sa.innerHTML='';
 
-  f.forEach(function(t) {
-    var sc, bc, bt, dt;
-    if (t.v < t.r[0]) {
-      sc = 'sr'; bc = 'sbr'; bt = 'Abaixo'; ha = true; dt = t.l;
-    } else if (t.v > t.r[1]) {
-      sc = 'sr'; bc = 'sbr'; bt = 'Acima'; ha = true; dt = t.h;
-    } else {
-      var rg = t.r[1] - t.r[0];
-      if (t.v < t.r[0] + rg * 0.1 || t.v > t.r[1] - rg * 0.1) {
-        sc = 'sy'; bc = 'sby'; bt = 'Atencao'; dt = 'Proximo do limite.';
-      } else {
-        sc = 'sg'; bc = 'sbg'; bt = 'Normal'; dt = 'Dentro da faixa.';
+  f.forEach(function(t){
+    var sc,bc,bt,dt,cond;
+    if(t.v<t.r[0]){
+      sc='sr';bc='sbr';bt='Abaixo';nR++;dt=t.l;cond=t.d;
+    }else if(t.v>t.r[1]){
+      sc='sr';bc='sbr';bt='Acima';nR++;dt=t.h;cond=t.d;
+    }else{
+      var rg=t.r[1]-t.r[0];
+      if(t.v<t.r[0]+rg*0.1||t.v>t.r[1]-rg*0.1){
+        sc='sy';bc='sby';bt='Atencao';nY++;dt='Proximo do limite. ';cond='Monitorar com medico.';
+      }else{
+        sc='sg';bc='sbg';bt='Normal';nG++;dt='Dentro da faixa esperada.';cond=null;
       }
     }
-    var e = document.createElement('div');
-    e.className = 'ri ' + sc;
-    e.setAttribute('onclick', 'tog(this)');
-    e.innerHTML = '<div class="rt"><div class="rn">' + t.n + '</div><div class="rv">' + t.v + ' ' + t.u + '</div></div>' +
-      '<div class="rf">Ref: ' + t.r[0] + ' a ' + t.r[1] + ' ' + t.u + '</div>' +
-      '<span class="sb ' + bc + '">' + bt + '</span>' +
-      '<div class="rd"><h4>O que e</h4><p>' + t.i + '</p><h4>Pode indicar</h4><p>' + dt + '</p></div>';
+    var e=document.createElement('div');
+    e.className='ri '+sc;
+    e.setAttribute('onclick','tog(this)');
+    var html='<div class="rt"><div class="rn">'+t.n+'</div><div class="rv">'+t.v+' '+t.u+'</div></div>';
+    html+='<div class="rf">Ref: '+t.r[0]+' a '+t.r[1]+' '+t.u+'</div>';
+    html+='<span class="sb '+bc+'">'+bt+'</span>';
+    html+='<div class="rd">';
+    html+='<h4>O que e</h4><p>'+t.i+'</p>';
+    html+='<h4>Analise do resultado</h4><p>'+dt+'</p>';
+    if(cond){
+      html+='<div class="cond"><strong>Possiveis condicoes:</strong><br>'+cond+'</div>';
+    }
+    html+='<div class="sug"><strong>O que melhorar:</strong><br>'+t.s+'</div>';
+    html+='</div>';
+    e.innerHTML=html;
     rl.appendChild(e);
   });
 
-  if (ha) {
-    al.innerHTML = '<div class="ab"><strong>Valores alterados. Procure seu medico.</strong></div>';
+  // Resumo
+  sa.innerHTML='<div class="sum">'+
+    '<div class="chip cg"><div class="ct">'+nG+'</div><div class="cl">Normais</div></div>'+
+    '<div class="chip cy"><div class="ct">'+nY+'</div><div class="cl">Atencao</div></div>'+
+    '<div class="chip cr"><div class="ct">'+nR+'</div><div class="cl">Alterados</div></div>'+
+    '</div>';
+
+  // Alerta
+  if(nR>0){
+    al.innerHTML='<div class="ab"><strong>Atencao: '+nR+' valor(es) alterado(s) encontrado(s).</strong> Recomendamos consulta medica para avaliacao. Nenhum resultado substitui diagnostico profissional.</div>';
+  }else if(nY>0){
+    al.innerHTML='<div class="aw"><strong>'+nY+' valor(es) proximo(s) do limite.</strong> Vale a pena conversar com seu medico em consulta de rotina.</div>';
   }
 }
 </script>
